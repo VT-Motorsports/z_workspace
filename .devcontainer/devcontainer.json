@@ -39,11 +39,5 @@
   },
   
   // Forward ports if needed (for debugging, etc.)
-  "forwardPorts": [],
-  
-  // Run as non-root user for security
-  "remoteUser": "user",
-  
-  // Features to add (optional)
-  "features": {}
+  "forwardPorts": []
 }
