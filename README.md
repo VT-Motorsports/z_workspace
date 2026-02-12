@@ -491,8 +491,8 @@ west build -b vcu_stm32 .
 2. **Clone your fork into the workspace**
    ```powershell
    cd C:\FORMULA\Code\formula-workspace
-   git clone https://github.com/YOUR-USERNAME/z_vcu my_project_name
-   cd my_project_name
+   git clone https://github.com/VT-Motorsports/YOUR_PROJECT_NAME
+   cd YOUR_PROJECT_NAME
    ```
 
 3. **Customize for your project**
