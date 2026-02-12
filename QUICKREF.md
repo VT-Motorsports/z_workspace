@@ -8,9 +8,16 @@ Common commands for daily development with Zephyr.
 
 ### Initialize Workspace
 ```powershell
-# First time setup
-west init -l .          # Initialize workspace from west.yml
-west update             # Fetch Zephyr and modules (~5-10 min)
+# First time setup - create workspace and fetch manifest
+cd C:\FORMULA\Code
+mkdir my-workspace
+cd my-workspace
+
+# Initialize from GitHub repo
+west init -m https://github.com/VT-Motorsports/formula-workspace .
+
+# Fetch Zephyr and modules (~5-10 min)
+west update
 
 # Install Zephyr's Python dependencies (required)
 pip install -r zephyr\scripts\requirements.txt
@@ -50,38 +57,38 @@ west list zephyr
 ```powershell
 # From app directory
 cd vcu
-west build -b vcu_board .
+west build -b vcu_stm32 .
 
 # From workspace root
-west build -b vcu_board -s vcu
+west build -b vcu_stm32 -s vcu
 ```
 
 ### Clean Builds
 ```powershell
 # Pristine build (cleans first)
-west build -b vcu_board . -p
+west build -b vcu_stm32 . -p
 
 # Or manually
 rm -r build
-west build -b vcu_board .
+west build -b vcu_stm32 .
 ```
 
 ### Build Configurations
 ```powershell
 # Debug build (default)
-west build -b vcu_board .
+west build -b vcu_stm32 .
 
 # Release build (optimized)
-west build -b vcu_board . -- -DCONFIG_DEBUG=n -DCONFIG_SIZE_OPTIMIZATIONS=y
+west build -b vcu_stm32 . -- -DCONFIG_DEBUG=n -DCONFIG_SIZE_OPTIMIZATIONS=y
 
 # Verbose build output
-west build -b vcu_board . -v
+west build -b vcu_stm32 . -v
 ```
 
 ### Build for Different Boards
 ```powershell
 # Build for VCU
-west build -b vcu_board .
+west build -b vcu_stm32 .
 
 # Build for BMS (example)
 west build -b bms_board .
@@ -109,7 +116,7 @@ west build
 notepad vcu\prj.conf
 
 # Board-specific config
-notepad vcu\boards\arm\vcu_board\vcu_board_defconfig
+notepad vcu\boards\arm\vcu_stm32\vcu_stm32_defconfig
 ```
 
 ### View Current Configuration
@@ -133,7 +140,7 @@ west flash --runner jlink
 ```
 
 ### Manual Flash (STM32CubeProgrammer)
-1. Build firmware: `west build -b vcu_board .`
+1. Build firmware: `west build -b vcu_stm32 .`
 2. Binary location: `build\zephyr\zephyr.bin`
 3. Open STM32CubeProgrammer
 4. Connect to ST-Link
@@ -236,7 +243,7 @@ pip install pyserial
 ### Working on an App
 ```powershell
 # Clone app
-git clone https://github.com/YOUR-ORG/vcu
+git clone https://github.com/VT-Motorsports/z_vcu
 cd vcu
 
 # Create feature branch
@@ -257,7 +264,7 @@ git pull origin main
 
 # Rebuild if dependencies changed
 rm -r build
-west build -b vcu_board .
+west build -b vcu_stm32 .
 ```
 
 ---
@@ -267,21 +274,25 @@ west build -b vcu_board .
 ### Important Paths
 ```
 C:\FORMULA\Code\formula-workspace\
+├── .west\               # West metadata
+├── z_workspace\         # Manifest repo (docs, west.yml)
+│   ├── README.md
+│   ├── QUICKREF.md
+│   └── west.yml
 ├── zephyr\              # Zephyr RTOS source
 ├── modules\             # HAL modules
 │   ├── hal\stm32\      # STM32 HAL
 │   └── ...
-├── vcu\                 # Your VCU app
-│   ├── src\            # Source code
-│   ├── boards\         # Board definitions
-│   ├── build\          # Build output
-│   │   └── zephyr\
-│   │       ├── zephyr.elf   # Debug binary
-│   │       ├── zephyr.bin   # Flash binary
-│   │       └── zephyr.hex   # Hex format
-│   ├── prj.conf        # App configuration
-│   └── CMakeLists.txt  # Build script
-└── west.yml            # Workspace manifest
+└── z_vcu\               # VCU application
+    ├── src\            # Source code
+    ├── boards\         # Board definitions
+    ├── build\          # Build output
+    │   └── zephyr\
+    │       ├── zephyr.elf   # Debug binary
+    │       ├── zephyr.bin   # Flash binary
+    │       └── zephyr.hex   # Hex format
+    ├── prj.conf        # App configuration
+    └── CMakeLists.txt  # Build script
 ```
 
 ### SDK Location
@@ -309,7 +320,7 @@ echo $env:ZEPHYR_SDK_INSTALL_DIR
 
 # CMake can find toolchain
 cd vcu
-west build -b vcu_board . --dry-run
+west build -b vcu_stm32 . --dry-run
 ```
 
 ### Check Build Size
@@ -343,10 +354,10 @@ arm-zephyr-eabi-objdump -d zephyr.elf > disassembly.txt
 ### Faster Builds
 ```powershell
 # Use ninja (default, fastest)
-west build -b vcu_board .
+west build -b vcu_stm32 .
 
 # Parallel builds (adjust based on CPU cores)
-west build -b vcu_board . -- -j8
+west build -b vcu_stm32 . -- -j8
 
 # Incremental builds (only rebuild changed files)
 # Just run west build again, no clean needed
@@ -414,7 +425,7 @@ west update
 # 3. Clean rebuild all apps
 cd vcu
 rm -r build
-west build -b vcu_board .
+west build -b vcu_stm32 .
 ```
 
 ---
@@ -428,7 +439,7 @@ cd C:\FORMULA\Code
 rm -r formula-workspace
 
 # Re-clone
-git clone https://github.com/YOUR-ORG/formula-workspace
+git clone https://github.com/VT-Motorsports/formula-workspace
 cd formula-workspace
 west init -l .
 west update
@@ -438,7 +449,7 @@ west update
 ```powershell
 cd vcu
 rm -r build
-west build -b vcu_board . -p
+west build -b vcu_stm32 . -p
 ```
 
 ### "West is confused"

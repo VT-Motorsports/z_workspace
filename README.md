@@ -295,10 +295,8 @@ cd formula-workspace
 
 ```powershell
 # Initialize workspace pointing to your manifest repo
-west init -m https://github.com/YOUR-ORG/formula-workspace .
+west init -m https://github.com/VT-Motorsports/z_workspace .
 ```
-
-**Replace `YOUR-ORG` with your actual GitHub organization or username.**
 
 **What this does:**
 - Fetches your manifest repo (README, west.yml, etc.)
@@ -308,7 +306,7 @@ west init -m https://github.com/YOUR-ORG/formula-workspace .
 **Expected output:**
 ```
 === Initializing in C:\FORMULA\Code\formula-workspace
---- Cloning manifest repository from https://github.com/YOUR-ORG/formula-workspace
+--- Cloning manifest repository from https://github.com/VT-Motorsports/z_workspace
 ...
 === Initialized. Now run "west update".
 ```
@@ -317,13 +315,13 @@ west init -m https://github.com/YOUR-ORG/formula-workspace .
 ```
 formula-workspace/
 ├── .west/                      ← West metadata
-└── formula-workspace/          ← Your manifest repo (cloned by west)
+└── z_workspace/                ← Manifest repo (cloned by west)
     ├── README.md
     ├── west.yml
     └── ...
 ```
 
-**Note:** The manifest repo is cloned as a subdirectory with the same name as your GitHub repo.
+**Note:** The manifest repo is cloned as a subdirectory named `z_workspace`.
 
 ### Step 3: Fetch Zephyr and Modules
 
@@ -407,7 +405,7 @@ C:\Users\YourName\.cmake\packages\Zephyr
 west list
 
 # Should show:
-# manifest     formula-workspace                           HEAD                    N/A
+# manifest     z_workspace                                 HEAD                    N/A
 # zephyr       zephyr                                      v4.2.0                  https://github.com/zephyrproject-rtos/zephyr
 # hal_stm32    modules/hal/stm32                           <commit>                https://github.com/zephyrproject-rtos/hal_stm32
 # ... (many more modules)
@@ -419,7 +417,7 @@ dir
 
 # You should see:
 # .west/                   ← West metadata
-# formula-workspace/       ← Your manifest repo (documentation, west.yml)
+# z_workspace/             ← Manifest repo (documentation, west.yml)
 # zephyr/                  ← Zephyr RTOS source
 # modules/                 ← HAL modules
 # bootloader/              ← MCUboot (maybe)
@@ -436,6 +434,120 @@ python -c "import yaml; import elftools; print('Python deps OK')"
 
 ---
 
+## Understanding the Workspace Architecture
+
+### How Zephyr Workspaces Work
+
+**A Zephyr workspace contains:**
+1. **Zephyr RTOS** - The core operating system (`zephyr/`)
+2. **HAL Modules** - Hardware abstraction layers for different MCUs (`modules/`)
+3. **Applications** - Your firmware projects (like `z_vcu/`)
+4. **Manifest Repo** - Documentation and workspace configuration (`z_workspace/`)
+
+**Key concept:** Multiple applications can share the same Zephyr RTOS and modules installation.
+
+```
+workspace/
+├── .west/                 ← West metadata
+├── z_workspace/           ← Documentation, setup guides
+├── zephyr/                ← Zephyr RTOS (shared by all apps)
+├── modules/               ← Hardware drivers (shared by all apps)
+├── z_vcu/                 ← VCU application
+├── z_bms/                 ← BMS application (example)
+└── my_custom_app/         ← Your new application
+```
+
+### Benefits of This Architecture
+
+✅ **One Zephyr installation** - All apps use the same RTOS version (no conflicts)  
+✅ **Shared modules** - Don't re-download STM32 HAL for each project  
+✅ **Consistent environment** - Everyone on the team has identical setup  
+✅ **Easy experimentation** - Fork an app, make changes, build alongside original  
+
+---
+
+## Working with Applications
+
+### Using the VCU Application
+
+The **z_vcu** repo contains firmware for the Vehicle Control Unit running on STM32H753VIT6.
+
+**To work on VCU:**
+```powershell
+# Clone into workspace (see "Build Your First App" below)
+git clone https://github.com/VT-Motorsports/z_vcu
+cd z_vcu
+west build -b vcu_stm32 .
+```
+
+### Creating a New Application Based on VCU
+
+**If you're starting a new project using the STM32H753VIT6:**
+
+1. **Fork the z_vcu repository on GitHub**
+   - Go to: https://github.com/VT-Motorsports/z_vcu
+   - Click "Fork" → Create your own copy
+
+2. **Clone your fork into the workspace**
+   ```powershell
+   cd C:\FORMULA\Code\formula-workspace
+   git clone https://github.com/YOUR-USERNAME/z_vcu my_project_name
+   cd my_project_name
+   ```
+
+3. **Customize for your project**
+   - Edit `CMakeLists.txt` to set your project name
+   - Modify source code in `src/`
+   - Adjust configuration in `prj.conf`
+   - Update board definition in `boards/arm/vcu_stm32/` if needed
+
+4. **Build your application**
+   ```powershell
+   west build -b vcu_stm32 .
+   ```
+
+**Why fork z_vcu?**
+- ✅ Starts with working STM32H753VIT6 configuration
+- ✅ Board definition already set up
+- ✅ Device tree configured for your hardware
+- ✅ Basic peripherals (CAN, ADC, GPIO) already initialized
+- ✅ Less setup, more building
+
+### Working on Multiple Applications Simultaneously
+
+**You can have multiple apps in the same workspace:**
+
+```powershell
+cd C:\FORMULA\Code\formula-workspace
+
+# Clone VCU
+git clone https://github.com/VT-Motorsports/z_vcu
+
+# Clone your custom project
+git clone https://github.com/YOUR-USERNAME/my_custom_app
+
+# Build VCU
+cd z_vcu
+west build -b vcu_stm32 .
+
+# Build your custom app (uses same Zephyr installation!)
+cd ../my_custom_app
+west build -b vcu_stm32 .
+```
+
+**Both applications share:**
+- Same Zephyr RTOS in `../zephyr/`
+- Same STM32 HAL in `../modules/hal/stm32/`
+- Same toolchain (Zephyr SDK)
+
+**Each application has:**
+- Independent source code
+- Independent Git repository
+- Independent build configuration
+- Independent build output in `build/`
+
+---
+
 ## Build Your First App
 
 ### Step 1: Clone the VCU Application
@@ -447,15 +559,15 @@ python -c "import yaml; import elftools; print('Python deps OK')"
 cd C:\FORMULA\Code\formula-workspace
 
 # Clone VCU app here
-git clone https://github.com/YOUR-ORG/vcu
+git clone https://github.com/VT-Motorsports/z_vcu
 
 # Your structure should now be:
 # formula-workspace/
 # ├── .west/               ← West metadata
-# ├── formula-workspace/   ← Your manifest repo (docs, west.yml)
+# ├── z_workspace/         ← Manifest repo (docs, west.yml)
 # ├── zephyr/              ← Zephyr RTOS
 # ├── modules/             ← HAL modules
-# └── vcu/                 ← Your VCU app
+# └── z_vcu/               ← VCU application
 ```
 
 **Important:** Apps must be cloned as siblings to `zephyr/` so west can find dependencies.
@@ -464,14 +576,14 @@ git clone https://github.com/YOUR-ORG/vcu
 
 ```powershell
 # Navigate into the app directory
-cd vcu
+cd z_vcu
 
 # Build
-west build -b vcu_board .
+west build -b vcu_stm32 .
 ```
 
 **What this does:**
-- Configures CMake for `vcu_board` (your custom STM32H753 board)
+- Configures CMake for `vcu_stm32` (custom STM32H753VIT6 board)
 - Compiles your application code
 - Links against Zephyr RTOS
 - Generates firmware binaries
@@ -485,7 +597,7 @@ Loading Zephyr default modules (Zephyr base).
 ...
 -- Configuring done
 -- Generating done
--- Build files written to: C:/FORMULA/Code/formula-workspace/vcu/build
+-- Build files written to: C:/FORMULA/Code/formula-workspace/z_vcu/build
 [1/234] Preparing syscall dependency handling
 ...
 [234/234] Linking C executable zephyr\zephyr.elf
@@ -602,9 +714,9 @@ west update
 **Fix:**
 ```powershell
 # Clean build
-cd vcu
+cd z_vcu
 rm -r build
-west build -b vcu_board .
+west build -b vcu_stm32 .
 ```
 
 ---
@@ -632,14 +744,16 @@ west build -b vcu_board .
 - West Guide: https://docs.zephyrproject.org/latest/develop/west/index.html
 
 **Internal:**
-- Embedded systems lead: [Your contact]
+- **Embedded Systems Lead:** Pujan Patel  
+  - Email: pujan@vt.edu
+  - Phone: (469) 325-8817
 - Formula SAE team Slack: #embedded channel
 
 ---
 
 ## Updating Zephyr Version (Future)
 
-**To update to a new Zephyr release:**
+**To update to a new Zephyr release: (DO NOT DO WITHOUT APPROVAL)** 
 
 1. Edit `west.yml`:
    ```yaml
