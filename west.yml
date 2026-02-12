@@ -9,5 +9,3 @@ manifest:
       revision: v4.2.0
       import: true
 
-  self:
-    path: .
