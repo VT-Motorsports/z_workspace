@@ -278,27 +278,52 @@ git config --global core.longpaths true
 
 **Why:** Zephyr has deeply nested module paths that can exceed Windows' default 260-character limit.
 
-### Step 1: Clone Workspace
+### Step 1: Create Workspace Directory
 
 ```powershell
 # Choose a location (no spaces in path)
 cd C:\FORMULA\Code
-git clone https://github.com/YOUR-ORG/formula-workspace
+mkdir formula-workspace
 cd formula-workspace
 ```
 
-### Step 2: Initialize West
+**Note:** This directory will contain Zephyr, modules, and your manifest repo.
+
+### Step 2: Initialize Workspace from GitHub
+
+**Use west to fetch your manifest repo and set up the workspace:**
 
 ```powershell
-west init -l .
+# Initialize workspace pointing to your manifest repo
+west init -m https://github.com/YOUR-ORG/formula-workspace .
 ```
 
-**This tells West:** "This folder is a workspace, use `west.yml` to know what to fetch"
+**Replace `YOUR-ORG` with your actual GitHub organization or username.**
+
+**What this does:**
+- Fetches your manifest repo (README, west.yml, etc.)
+- Creates `.west/` metadata in current directory
+- Sets up workspace structure
 
 **Expected output:**
 ```
-=== Initialized. Now run "west update" inside C:\FORMULA\Code\formula-workspace.
+=== Initializing in C:\FORMULA\Code\formula-workspace
+--- Cloning manifest repository from https://github.com/YOUR-ORG/formula-workspace
+...
+=== Initialized. Now run "west update".
 ```
+
+**After this completes, your directory structure will be:**
+```
+formula-workspace/
+├── .west/                      ← West metadata
+└── formula-workspace/          ← Your manifest repo (cloned by west)
+    ├── README.md
+    ├── west.yml
+    └── ...
+```
+
+**Note:** The manifest repo is cloned as a subdirectory with the same name as your GitHub repo.
 
 ### Step 3: Fetch Zephyr and Modules
 
@@ -393,11 +418,12 @@ west list
 dir
 
 # You should see:
-# zephyr/      ← Zephyr RTOS source
-# modules/     ← HAL modules
-# bootloader/  ← MCUboot (maybe)
-# .west/       ← West metadata
-# west.yml     ← Workspace manifest
+# .west/                   ← West metadata
+# formula-workspace/       ← Your manifest repo (documentation, west.yml)
+# zephyr/                  ← Zephyr RTOS source
+# modules/                 ← HAL modules
+# bootloader/              ← MCUboot (maybe)
+# tools/                   ← Additional tools
 ```
 
 **Verify Python requirements:**
@@ -406,7 +432,7 @@ python -c "import yaml; import elftools; print('Python deps OK')"
 # Should print: Python deps OK
 ```
 
-✅ **Checkpoint:** Workspace set up, Zephyr downloaded, Python requirements installed
+✅ **Checkpoint:** Workspace set up, Zephyr downloaded, Python requirements installed, CMake package exported
 
 ---
 
@@ -417,7 +443,7 @@ python -c "import yaml; import elftools; print('Python deps OK')"
 **Clone into the workspace root (sibling to `zephyr/` folder):**
 
 ```powershell
-# Make sure you're in the workspace root
+# Make sure you're in the workspace root (where .west/ is)
 cd C:\FORMULA\Code\formula-workspace
 
 # Clone VCU app here
@@ -425,12 +451,14 @@ git clone https://github.com/YOUR-ORG/vcu
 
 # Your structure should now be:
 # formula-workspace/
-# ├── zephyr/           ← Zephyr RTOS
-# ├── modules/          ← HAL modules
-# └── vcu/              ← Your VCU app
+# ├── .west/               ← West metadata
+# ├── formula-workspace/   ← Your manifest repo (docs, west.yml)
+# ├── zephyr/              ← Zephyr RTOS
+# ├── modules/             ← HAL modules
+# └── vcu/                 ← Your VCU app
 ```
 
-**Important:** Apps must be cloned into the workspace root so west can find dependencies.
+**Important:** Apps must be cloned as siblings to `zephyr/` so west can find dependencies.
 
 ### Step 2: Build
 
