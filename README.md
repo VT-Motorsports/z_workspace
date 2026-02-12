@@ -1,334 +1,645 @@
-# Formula SAE Zephyr Workspace
+# Virginia Tech Formula SAE - Zephyr Workspace
 
-Shared Zephyr workspace for all Formula SAE embedded applications.
+**Native setup guide for VCU and other embedded applications.**
 
-## Overview
-
-This workspace provides a common Zephyr RTOS environment for all Formula SAE embedded projects. Applications (VCU, BMS, Dashboard, etc.) are separate Git repositories that you clone into this workspace as needed.
-
-**Everything runs in a Docker container** — no manual tool installation required. Just install Docker + VS Code and you're ready to develop.
-
-**Architecture:**
-```
-formula-workspace/          # This repo (shared workspace)
-├── .devcontainer/         # Dev container config (Docker setup)
-├── zephyr/                # Fetched by west (shared Zephyr RTOS)
-├── modules/               # Fetched by west (HALs, drivers, etc.)
-├── vcu/                   # Your cloned app repos
-├── bms/                   # (clone as needed)
-└── dashboard/             # (clone as needed)
-```
+This workspace uses Zephyr RTOS 4.2.0 with the official Zephyr SDK. No Docker, no containers, just straightforward native development.
 
 ---
 
-## Quick Start (Recommended - 10 Minutes)
+## ⏱️ Total Setup Time: ~30 Minutes
 
-### Prerequisites (One-time install)
-
-**You only need 3 things:**
-1. **[Docker Desktop](https://www.docker.com/products/docker-desktop)** (Windows/Mac/Linux)
-2. **[VS Code](https://code.visualstudio.com/)**
-3. **[Dev Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)**
-
-**That's it.** No CMake, no Python, no Zephyr SDK to install manually.
+- Prerequisites install: ~20 minutes (mostly downloads)
+- Workspace setup: ~10 minutes
+- **One-time setup, then you're done**
 
 ---
 
-### Setup Steps
+## 📋 Table of Contents
 
-**1. Install Docker Desktop**
-- Download and install from https://www.docker.com/products/docker-desktop
-- Start Docker Desktop and make sure it's running
+1. [Prerequisites](#prerequisites)
+2. [Install Zephyr SDK](#install-zephyr-sdk)
+3. [Install Python and West](#install-python-and-west)
+4. [Install Build Tools](#install-build-tools)
+5. [Set Up Workspace](#set-up-workspace)
+6. [Build Your First App](#build-your-first-app)
+7. [Troubleshooting](#troubleshooting)
 
-**2. Install VS Code + Dev Containers Extension**
-```bash
-# Install VS Code, then add the extension:
-# In VS Code: Ctrl+Shift+X → Search "Dev Containers" → Install
-# Or: https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers
+---
+
+## Prerequisites
+
+**What you need:**
+- Windows 10/11 (64-bit)
+- ~5 GB free disk space
+- Internet connection
+- Administrator access
+
+**Recommended:**
+- VS Code (for editing)
+- Git for Windows
+
+---
+
+## Install Zephyr SDK
+
+The Zephyr SDK contains all the ARM toolchains (GCC, GDB, etc.) needed to build firmware.
+
+### Step 1: Download Zephyr SDK
+
+**Direct download link (v0.16.5-1, ~500 MB):**
+https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.5-1/zephyr-sdk-0.16.5-1_windows-x86_64.7z
+
+**Or manually:**
+1. Go to: https://github.com/zephyrproject-rtos/sdk-ng/releases
+2. Find **v0.16.5-1**
+3. Download: `zephyr-sdk-0.16.5-1_windows-x86_64.7z`
+
+### Step 2: Extract SDK
+
+**Extract to a path WITHOUT spaces:**
+```
+✅ Good: C:\zephyr-sdk-0.16.5-1
+✅ Good: D:\tools\zephyr-sdk-0.16.5-1
+❌ Bad:  C:\Program Files\zephyr-sdk-0.16.5-1  (has spaces)
 ```
 
-**3. Clone This Workspace**
-```bash
-git clone https://github.com/your-org/formula-workspace
+**Using 7-Zip (if you don't have it, install from https://www.7-zip.org/):**
+```powershell
+# Right-click the .7z file → 7-Zip → Extract to "zephyr-sdk-0.16.5-1\"
+# Move the extracted folder to C:\
+```
+
+### Step 3: Run SDK Setup
+
+**Open PowerShell as Administrator:**
+```powershell
+cd C:\zephyr-sdk-0.16.5-1
+.\setup.cmd
+```
+
+**This installs:**
+- ARM GCC compiler
+- Device tree compiler (dtc)
+- CMake integration files
+- Windows USB drivers (for ST-Link, J-Link, etc.)
+
+**Expected output:**
+```
+Zephyr SDK 0.16.5-1 Setup
+
+Installing drivers for:
+[*] ST-Link
+[*] J-Link
+...
+Setup complete!
+```
+
+### Step 4: Verify SDK Installation
+
+```powershell
+# Check ARM GCC is accessible
+C:\zephyr-sdk-0.16.5-1\arm-zephyr-eabi\bin\arm-zephyr-eabi-gcc.exe --version
+
+# Should show:
+# arm-zephyr-eabi-gcc (Zephyr SDK 0.16.5-1) 12.2.0
+```
+
+### Step 5: Set Environment Variables
+
+**Set these permanently so CMake can find the SDK:**
+
+**Option A: Using PowerShell (Permanent)**
+```powershell
+# Set SDK location
+[System.Environment]::SetEnvironmentVariable('ZEPHYR_SDK_INSTALL_DIR', 'C:\zephyr-sdk-0.16.5-1', 'User')
+
+# Set toolchain variant
+[System.Environment]::SetEnvironmentVariable('ZEPHYR_TOOLCHAIN_VARIANT', 'zephyr', 'User')
+
+# Restart PowerShell for changes to take effect
+```
+
+**Option B: Using GUI (Easier)**
+1. Press Windows key
+2. Search "Environment Variables"
+3. Click "Edit environment variables for your account"
+4. Under "User variables", click "New"
+5. Add:
+   - Variable: `ZEPHYR_SDK_INSTALL_DIR`
+   - Value: `C:\zephyr-sdk-0.16.5-1`
+6. Click "New" again
+7. Add:
+   - Variable: `ZEPHYR_TOOLCHAIN_VARIANT`
+   - Value: `zephyr`
+8. Click OK
+
+**Verify (in a NEW PowerShell window):**
+```powershell
+echo $env:ZEPHYR_SDK_INSTALL_DIR
+# Should show: C:\zephyr-sdk-0.16.5-1
+
+echo $env:ZEPHYR_TOOLCHAIN_VARIANT
+# Should show: zephyr
+```
+
+✅ **Checkpoint:** SDK installed and environment variables set
+
+---
+
+## Install Python and West
+
+West is Zephyr's meta-tool for managing the workspace and building projects.
+
+### Step 1: Install Python
+
+**Download Python 3.11.x (recommended for Zephyr 4.2.0):**
+
+https://www.python.org/downloads/release/python-31110/
+
+**Scroll down to "Files" and download:**
+- **Windows installer (64-bit)**: `python-3.11.10-amd64.exe`
+
+**Note:** Python 3.12+ may work but is not extensively tested with Zephyr 4.2.0. We recommend 3.11.x for maximum compatibility.
+
+**During installation:**
+- ✅ **CHECK "Add Python to PATH"** (critical!)
+- ✅ Click "Install Now"
+
+### Step 2: Verify Python
+
+**Open a NEW PowerShell window:**
+```powershell
+python --version
+# Should show: Python 3.11.10 (or similar)
+
+pip --version
+# Should show: pip 24.x.x from ...
+```
+
+⚠️ **If "python is not recognized":**
+- You didn't check "Add Python to PATH" during install
+- Re-run installer, choose "Modify", check "Add Python to environment variables"
+
+### Step 3: Install West
+
+```powershell
+pip install west
+```
+
+**Verify:**
+```powershell
+west --version
+# Should show: West version: v1.2.0 (or similar)
+```
+
+✅ **Checkpoint:** Python and West installed
+
+---
+
+## Install Build Tools
+
+### Step 1: Install CMake
+
+**Download CMake 3.20+:**
+https://cmake.org/download/
+
+**Get "Windows x64 Installer":**
+- Latest release: `cmake-3.31.5-windows-x86_64.msi`
+
+**During installation:**
+- ✅ **Select "Add CMake to the system PATH for all users"**
+- Click Next → Install
+
+### Step 2: Install Ninja
+
+**Option A: Using Chocolatey (easiest)**
+
+If you have Chocolatey:
+```powershell
+choco install ninja
+```
+
+**Option B: Manual Install**
+
+1. Download: https://github.com/ninja-build/ninja/releases/latest/download/ninja-win.zip
+2. Extract `ninja.exe` to: `C:\tools\ninja\` (create folder)
+3. Add to PATH:
+   ```powershell
+   # Open System Environment Variables:
+   # Windows key → Search "Environment Variables" → Edit system environment variables
+   # → Environment Variables → System Variables → Path → Edit
+   # → New → C:\tools\ninja → OK
+   ```
+
+### Step 3: Install Device Tree Compiler (dtc)
+
+**Option A: Using Chocolatey**
+```powershell
+choco install dtc-msys2
+```
+
+**Option B: Using MSYS2**
+
+1. Install MSYS2: https://www.msys2.org/
+2. In MSYS2 terminal:
+   ```bash
+   pacman -S dtc
+   ```
+3. Add MSYS2 bin to PATH: `C:\msys64\usr\bin`
+
+### Step 4: Verify All Tools
+
+**Open a NEW PowerShell window:**
+```powershell
+cmake --version
+# CMake version 3.31.5
+
+ninja --version
+# 1.12.1
+
+dtc --version
+# Version: DTC 1.7.0
+```
+
+✅ **Checkpoint:** All build tools installed
+
+---
+
+## Set Up Workspace
+
+### Prerequisites Check
+
+Before setting up the workspace, configure Git for Windows long paths:
+
+```powershell
+# Enable long path support in Git
+git config --global core.longpaths true
+```
+
+**Why:** Zephyr has deeply nested module paths that can exceed Windows' default 260-character limit.
+
+### Step 1: Clone Workspace
+
+```powershell
+# Choose a location (no spaces in path)
+cd C:\FORMULA\Code
+git clone https://github.com/YOUR-ORG/formula-workspace
 cd formula-workspace
 ```
 
-**4. Open in VS Code**
-```bash
-code .
+### Step 2: Initialize West
+
+```powershell
+west init -l .
 ```
 
-**5. Reopen in Container**
-- VS Code will prompt: **"Reopen in Container"** → Click it
-- Or manually: `Ctrl+Shift+P` → "Dev Containers: Reopen in Container"
-- **First time**: Container builds (~5-10 minutes, downloads ~2-3GB)
-- **After first time**: Opens in seconds (cached)
+**This tells West:** "This folder is a workspace, use `west.yml` to know what to fetch"
 
-**6. Wait for Zephyr to Download**
-- The container automatically runs `west update` in the background
-- Check the terminal output to see progress
-- This takes 5-10 minutes (only happens once)
-
-**✅ Done!** You're now inside a Linux container with:
-- Zephyr SDK installed
-- CMake, Ninja, Python, west
-- All dependencies configured
-- Your workspace code mounted and editable
-
----
-
-## Adding and Building Applications
-
-**You're now working inside the container.** All commands run in the containerized Linux environment.
-
-### Available Applications
-
-- **VCU** (Vehicle Control Unit): `https://github.com/your-org/vcu`
-- **BMS** (Battery Management System): `https://github.com/your-org/bms`
-- **Dashboard** (Driver Display): `https://github.com/your-org/dashboard`
-
-### Clone an Application
-
-```bash
-# From the workspace root (inside container)
-git clone https://github.com/your-org/vcu
+**Expected output:**
+```
+=== Initialized. Now run "west update" inside C:\FORMULA\Code\formula-workspace.
 ```
 
-### Build an Application
+### Step 3: Fetch Zephyr and Modules
 
-```bash
-# Option 1: Build from inside the app directory
-cd vcu
-west build -b vcu_board .
-
-# Option 2: Build from workspace root
-west build -b vcu_board -s vcu
-```
-
-### Flash to Hardware
-
-**Note:** USB device passthrough varies by OS.
-
-#### Windows/Mac
-Docker Desktop supports USB passthrough. Make sure your ST-Link/J-Link is connected.
-
-```bash
-cd vcu
-west flash
-```
-
-#### Linux
-Direct USB access works:
-```bash
-cd vcu
-west flash
-```
-
-If flash fails, you can build and copy the binary to flash externally:
-```bash
-west build -b vcu_board .
-# Binary is in: build/zephyr/zephyr.bin
-# Copy to host and flash with STM32CubeProgrammer or st-flash
-```
-
----
-
-## Working with Multiple Applications
-
-```bash
-# Clone multiple apps (inside container)
-git clone https://github.com/your-org/vcu
-git clone https://github.com/your-org/bms
-
-# Build VCU
-cd vcu
-west build -b vcu_board .
-cd ..
-
-# Build BMS
-cd bms
-west build -b bms_board .
-cd ..
-```
-
-Each application maintains its own `build/` directory.
-
----
-
-## Typical Workflow
-
-```bash
-# 1. Open VS Code and reopen in container (if not already)
-# 2. Inside container terminal:
-
-# Update workspace (pull latest Zephyr changes)
+```powershell
 west update
+```
 
-# Pull latest app changes
+**This downloads:**
+- Zephyr RTOS source (~500 MB)
+- HAL modules (STM32, NXP, etc.)
+- Other dependencies
+
+⏱️ **Takes 5-10 minutes depending on internet speed**
+
+**Expected output:**
+```
+=== updating zephyr (zephyr):
+--- zephyr: initializing
+Initialized empty Git repository in C:/FORMULA/Code/formula-workspace/zephyr/.git/
+...
+=== updating hal_stm32 (modules/hal/stm32):
+...
+=== update completed successfully.
+```
+
+### Step 4: Install Zephyr's Python Requirements
+
+**After `west update` completes, install Zephyr's build dependencies:**
+
+```powershell
+pip install -r zephyr\scripts\requirements.txt
+```
+
+**This installs:**
+- PyYAML (devicetree and Kconfig processing)
+- pyelftools (binary analysis)
+- canopen (CAN utilities)
+- packaging (version handling)
+- progress (build progress bars)
+- psutil (system utilities)
+- Other build-time Python tools
+
+⏱️ **Takes ~1 minute**
+
+**Expected output:**
+```
+Collecting PyYAML>=5.1
+  Downloading PyYAML-6.0-cp311-cp311-win_amd64.whl
+...
+Successfully installed PyYAML-6.0 pyelftools-0.29 ...
+```
+
+⚠️ **This is required** - without these packages, builds will fail with Python import errors.
+
+### Step 5: Export Zephyr CMake Package
+
+**Run west zephyr-export to set up CMake integration:**
+
+```powershell
+west zephyr-export
+```
+
+**This creates:**
+- CMake package files for Zephyr
+- Allows CMake to find Zephyr modules
+- Required for IDE integration and proper builds
+
+**Expected output:**
+```
+Zephyr (c:\formula\code\formula-workspace\zephyr)
+has been added to the user package registry in:
+C:\Users\YourName\.cmake\packages\Zephyr
+```
+
+✅ **Checkpoint:** Zephyr Python dependencies installed, CMake package exported
+
+### Step 6: Verify Workspace
+
+```powershell
+# Check what was fetched
+west list
+
+# Should show:
+# manifest     formula-workspace                           HEAD                    N/A
+# zephyr       zephyr                                      v4.2.0                  https://github.com/zephyrproject-rtos/zephyr
+# hal_stm32    modules/hal/stm32                           <commit>                https://github.com/zephyrproject-rtos/hal_stm32
+# ... (many more modules)
+```
+
+**Check folders exist:**
+```powershell
+dir
+
+# You should see:
+# zephyr/      ← Zephyr RTOS source
+# modules/     ← HAL modules
+# bootloader/  ← MCUboot (maybe)
+# .west/       ← West metadata
+# west.yml     ← Workspace manifest
+```
+
+**Verify Python requirements:**
+```powershell
+python -c "import yaml; import elftools; print('Python deps OK')"
+# Should print: Python deps OK
+```
+
+✅ **Checkpoint:** Workspace set up, Zephyr downloaded, Python requirements installed
+
+---
+
+## Build Your First App
+
+### Step 1: Clone the VCU Application
+
+**Clone into the workspace root (sibling to `zephyr/` folder):**
+
+```powershell
+# Make sure you're in the workspace root
+cd C:\FORMULA\Code\formula-workspace
+
+# Clone VCU app here
+git clone https://github.com/YOUR-ORG/vcu
+
+# Your structure should now be:
+# formula-workspace/
+# ├── zephyr/           ← Zephyr RTOS
+# ├── modules/          ← HAL modules
+# └── vcu/              ← Your VCU app
+```
+
+**Important:** Apps must be cloned into the workspace root so west can find dependencies.
+
+### Step 2: Build
+
+```powershell
+# Navigate into the app directory
 cd vcu
-git pull
-cd ..
 
 # Build
-cd vcu
 west build -b vcu_board .
+```
 
-# Flash to hardware
+**What this does:**
+- Configures CMake for `vcu_board` (your custom STM32H753 board)
+- Compiles your application code
+- Links against Zephyr RTOS
+- Generates firmware binaries
+
+⏱️ **First build: ~2-3 minutes. Incremental builds: ~10-30 seconds**
+
+**Expected output:**
+```
+-- west build: generating a build system
+Loading Zephyr default modules (Zephyr base).
+...
+-- Configuring done
+-- Generating done
+-- Build files written to: C:/FORMULA/Code/formula-workspace/vcu/build
+[1/234] Preparing syscall dependency handling
+...
+[234/234] Linking C executable zephyr\zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      123456 B       2 MB      5.88%
+             RAM:       45678 B     512 KB      8.71%
+        IDT_LIST:          0 GB         2 KB      0.00%
+```
+
+### Step 3: Find Your Binaries
+
+```powershell
+cd build\zephyr
+
+dir
+
+# You'll see:
+# zephyr.elf    ← ELF file (for debugging)
+# zephyr.bin    ← Raw binary (for flashing)
+# zephyr.hex    ← Intel HEX format
+```
+
+✅ **Checkpoint:** Successfully built firmware!
+
+---
+
+## Flash to Hardware
+
+### Using STM32CubeProgrammer (Recommended)
+
+1. **Install STM32CubeProgrammer:** https://www.st.com/en/development-tools/stm32cubeprog.html
+2. **Connect ST-Link to your board**
+3. **Open STM32CubeProgrammer**
+4. **Select "ST-LINK" interface → Connect**
+5. **Open file:** `build/zephyr/zephyr.bin`
+6. **Start address:** `0x08000000` (or your flash base address)
+7. **Click "Start Programming"**
+
+### Using West Flash (If OpenOCD Configured)
+
+```powershell
+cd vcu
 west flash
 ```
 
----
-
-## VS Code Tips
-
-### Terminal in Container
-- Open terminal: `Ctrl + `` (backtick)
-- All terminals run inside the container automatically
-
-### Rebuilding Container
-If you need to rebuild the container (e.g., after updating .devcontainer config):
-- `Ctrl+Shift+P` → "Dev Containers: Rebuild Container"
-
-### Exiting Container
-- `Ctrl+Shift+P` → "Dev Containers: Reopen Folder Locally"
-- This closes the container and opens the workspace on your host
-
----
-
-## Helper Scripts (Optional)
-
-Convenience scripts are provided:
-
-**Linux/Mac:**
-```bash
-./scripts/build-app.sh vcu vcu_board
-./scripts/build-app.sh bms bms_board
-```
-
-**Windows (PowerShell inside container):**
-```bash
-./scripts/build-app.ps1 vcu vcu_board
-```
+**Note:** Requires OpenOCD configuration in your board definition.
 
 ---
 
 ## Troubleshooting
 
-### "Cannot connect to Docker daemon"
-- Make sure Docker Desktop is running
-- On Windows: Check that WSL 2 backend is enabled
+### "west: command not found"
 
-### "Reopen in Container" button doesn't appear
-- Install the Dev Containers extension
-- Or manually: `Ctrl+Shift+P` → "Dev Containers: Reopen in Container"
+**Cause:** Python Scripts folder not in PATH
 
-### Container build is slow
-- First build downloads ~2-3GB (Zephyr Docker image)
-- Subsequent builds use cache (seconds)
-- `west update` inside container takes 5-10 minutes first time
+**Fix:**
+```powershell
+# Find where pip installed west
+pip show west
+# Look for "Location: C:\Users\<you>\AppData\Local\Programs\Python\Python311\Lib\site-packages"
 
-### "Board 'xyz' not found"
-- Make sure the application repository contains the board definition in `boards/arm/xyz/`
+# Add to PATH:
+# The Scripts folder is one level up: C:\Users\<you>\AppData\Local\Programs\Python\Python311\Scripts
 
-### Build errors after pulling new code
-```bash
+# Add via System Environment Variables or:
+$env:Path += ";C:\Users\<you>\AppData\Local\Programs\Python\Python311\Scripts"
+```
+
+### "CMake Error: could not find toolchain"
+
+**Cause:** SDK not found or not set up correctly
+
+**Fix:**
+```powershell
+# Verify SDK location
+dir C:\zephyr-sdk-0.16.5-1
+
+# Re-run setup
+cd C:\zephyr-sdk-0.16.5-1
+.\setup.cmd
+
+# Set environment variable (if needed)
+$env:ZEPHYR_SDK_INSTALL_DIR = "C:\zephyr-sdk-0.16.5-1"
+```
+
+### "Board 'vcu_board' not found"
+
+**Cause:** Board definition not in your app repo
+
+**Fix:**
+- Ensure `vcu/boards/arm/vcu_board/` exists with:
+  - `vcu_board.dts` (devicetree)
+  - `vcu_board_defconfig` (Kconfig)
+  - `vcu_board.yaml` (metadata)
+
+### "west update" is slow or fails
+
+**Cause:** Large download, network issues
+
+**Fix:**
+```powershell
+# Use shallow clone (faster, smaller)
+west update --fetch-opt=--depth=1
+
+# Or if stuck, delete and retry
+rm -r zephyr modules
+west update
+```
+
+### Build fails with "ninja: error: ..."
+
+**Cause:** Interrupted build, corrupted build cache
+
+**Fix:**
+```powershell
+# Clean build
 cd vcu
-rm -rf build
+rm -r build
 west build -b vcu_board .
 ```
 
-### Can't flash hardware (USB passthrough issues)
-- Windows/Mac: Ensure Docker Desktop has USB device access
-- Alternative: Copy binary from `build/zephyr/zephyr.bin` and flash externally
+---
+
+## Next Steps
+
+**For your team:**
+1. Share this README
+2. Have everyone run through setup (30 min)
+3. Build VCU app together
+4. Flash and verify on hardware
+
+**For development:**
+- See [QUICKREF.md](QUICKREF.md) for common commands
+- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed fixes
+- Check Zephyr docs: https://docs.zephyrproject.org/
 
 ---
 
-## Advanced: Native Setup (Not Recommended)
+## Getting Help
 
-If you absolutely need native builds (not containerized), see [NATIVE_SETUP.md](docs/NATIVE_SETUP.md).
+**Common resources:**
+- Zephyr Docs: https://docs.zephyrproject.org/
+- Zephyr Discord: https://discord.gg/zephyr-rtos
+- West Guide: https://docs.zephyrproject.org/latest/develop/west/index.html
 
-**Why container is better:**
-- ✅ No SDK installation (~2GB, 20 minutes)
-- ✅ No Python environment conflicts
-- ✅ No CMake version mismatches
-- ✅ Works identically on Windows/Mac/Linux
-- ✅ New members onboard in 10 minutes vs 2 hours
-
----
-
-## Directory Structure
-
-```
-formula-workspace/
-├── .devcontainer/
-│   └── devcontainer.json    # Dev container config
-├── .west/                   # West metadata (auto-generated)
-├── west.yml                 # Manifest (Zephyr version + modules)
-├── .gitignore              # Excludes dependencies and apps
-├── README.md               # This file
-├── scripts/                # Helper scripts
-│
-# Fetched by west update:
-├── zephyr/                 # Zephyr RTOS v4.2.0
-├── modules/                # HALs (hal_stm32, etc.)
-├── bootloader/             # MCUboot (if needed)
-│
-# Cloned by developers:
-├── vcu/                    # Vehicle Control Unit app
-├── bms/                    # Battery Management System app
-└── dashboard/              # Driver Display app
-```
+**Internal:**
+- Embedded systems lead: [Your contact]
+- Formula SAE team Slack: #embedded channel
 
 ---
 
-## Updating Zephyr Version
+## Updating Zephyr Version (Future)
 
-To update to a new Zephyr version:
+**To update to a new Zephyr release:**
 
-1. Edit `west.yml` and change the revision:
+1. Edit `west.yml`:
    ```yaml
-   revision: v4.3.0  # or desired version
+   revision: v4.3.0  # Update this line
    ```
 
-2. Update `.devcontainer/devcontainer.json` if needed (change Docker image version)
-
-3. Rebuild container:
-   - `Ctrl+Shift+P` → "Dev Containers: Rebuild Container"
-
-4. Inside container:
-   ```bash
+2. Update workspace:
+   ```powershell
    west update
    ```
 
----
+3. Rebuild all apps:
+   ```powershell
+   cd vcu
+   rm -r build
+   west build -b vcu_board .
+   ```
 
-## What's in the Container?
-
-The dev container uses Zephyr's official Docker image which includes:
-- **Zephyr SDK 0.16.5**: ARM, RISC-V, x86 toolchains
-- **CMake 3.27+**
-- **Ninja build system**
-- **Python 3.11** with west and dependencies
-- **Device tree compiler (dtc)**
-- **GDB** for debugging
-- **OpenOCD** for flashing/debugging
-- **Git, curl, wget** and other utilities
+**Pin versions to avoid drift between team members.**
 
 ---
 
-## Resources
+## License
 
-- [Zephyr Documentation](https://docs.zephyrproject.org/)
-- [West User Guide](https://docs.zephyrproject.org/latest/develop/west/index.html)
-- [Dev Containers Documentation](https://code.visualstudio.com/docs/devcontainers/containers)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+[Your license info]
 
 ---
 
-## Support
+## Contributing
 
-For issues with:
-- **Workspace/container setup**: Contact the embedded systems lead
-- **Application code**: Open an issue in the specific app repository
-- **Zephyr RTOS**: Check Zephyr documentation or GitHub discussions
-- **Docker/VS Code**: Check official documentation links above
+[Your contribution guidelines]
