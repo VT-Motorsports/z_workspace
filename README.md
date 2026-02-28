@@ -61,12 +61,16 @@ https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.16.5-1/zephyr-
 ✅ Good: C:\zephyr-sdk-0.16.5-1
 ✅ Good: D:\tools\zephyr-sdk-0.16.5-1
 ❌ Bad:  C:\Program Files\zephyr-sdk-0.16.5-1  (has spaces)
+❌ Bad:  C:\Program Files\zephyr-sdk-0.16.5-1\zephyr-sdk-0.16.5-1  (nested internal directory)
+
+# MAKE SURE FILES ARE directly available inside the folder #
 ```
 
 **Using 7-Zip (if you don't have it, install from https://www.7-zip.org/):**
 ```powershell
 # Right-click the .7z file → 7-Zip → Extract to "zephyr-sdk-0.16.5-1\"
 # Move the extracted folder to C:\
+# ONCE you download 7zip add it to your system path with C:\Program Files\7-Zip\"
 ```
 
 ### Step 3: Run SDK Setup
@@ -153,6 +157,8 @@ West is Zephyr's meta-tool for managing the workspace and building projects.
 ### Step 1: Install Python
 
 **Download Python 3.11.x (recommended for Zephyr 4.2.0):**
+DO NOT INSTALL A NEWER VERSION OF PYTHON
+STICK TO 3.11.
 
 https://www.python.org/downloads/release/python-31110/
 
@@ -180,6 +186,9 @@ pip --version
 - You didn't check "Add Python to PATH" during install
 - Re-run installer, choose "Modify", check "Add Python to environment variables"
 
+
+**IF PIP NOT FOUND** 
+- run python -m  ensurepip --upgrade
 ### Step 3: Install West
 
 ```powershell
