@@ -728,23 +728,6 @@ rm -r build
 west build -b vcu_stm32 .
 ```
 
----
-
-## Next Steps
-
-**For your team:**
-1. Share this README
-2. Have everyone run through setup (30 min)
-3. Build VCU app together
-4. Flash and verify on hardware
-
-**For development:**
-- See [QUICKREF.md](QUICKREF.md) for common commands
-- See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed fixes
-- Check Zephyr docs: https://docs.zephyrproject.org/
-
----
-
 ## Getting Help
 
 **Common resources:**
@@ -753,10 +736,10 @@ west build -b vcu_stm32 .
 - West Guide: https://docs.zephyrproject.org/latest/develop/west/index.html
 
 **Internal:**
-- **Embedded Systems Lead:** Pujan Patel  
+  -  Pujan Shah  
   - Email: pujan@vt.edu
   - Phone: (469) 325-8817
-- Formula SAE team Slack: #embedded channel
+
 
 ---
 
@@ -780,16 +763,6 @@ west build -b vcu_stm32 .
    rm -r build
    west build -b vcu_board .
    ```
-
-**Pin versions to avoid drift between team members.**
-
----
-
-## License
-
-[Your license info]
-
----
 
 ## Contributing
 
