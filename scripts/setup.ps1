@@ -113,7 +113,12 @@ if (!(Test-Path "$ROOT\.west\config")) {
 
     Write-Host "Initializing West"
 
-    & $PYTHON -m west init -l .
+    Push-Location $ROOT
+
+    & $PYTHON -m west init
+    & $PYTHON -m west config manifest.path .
+
+    Pop-Location
 }
 
 
