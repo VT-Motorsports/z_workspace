@@ -117,7 +117,7 @@ Run $PYTHON -m pip install --upgrade west
 
 Write-Host "Configuring Git..."
 Run git config --global http.version HTTP/1.1
-
+    
 # West workspace
 # This repository intentionally acts as both the Git repository and the
 # West workspace topdir. Creating .west/config directly avoids west init

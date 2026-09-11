@@ -10,7 +10,10 @@ manifest:
     - name: zephyr
       remote: zephyrproject-rtos
       revision: v4.2.0
-      import: true
+      import:
+        name-allowlist:
+          - cmsis_6
+          - hal_stm32
 
     - name: z_vcu
       remote: vt-motorsports
