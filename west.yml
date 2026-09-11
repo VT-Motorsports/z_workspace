@@ -8,6 +8,7 @@ manifest:
 
   projects:
     - name: zephyr
+      path: deps/zephyr
       remote: zephyrproject-rtos
       revision: v4.2.0
       import:
