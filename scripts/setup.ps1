@@ -4,6 +4,8 @@ $ROOT = Split-Path -Parent $PSScriptRoot
 $VENV = "$ROOT\.venv"
 $SDK_BASE = "$ROOT\sdk"
 
+$env:PIP_CACHE_DIR = "$ROOT\.pip-cache"
+
 function Run {
     param(
         [Parameter(Mandatory = $true, Position = 0)]
