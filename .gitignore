@@ -1,16 +1,22 @@
-.west/
+/.venv/
 
-.venv/
+/.west/
 
-sdk/
+/sdk/
 
-build/
-*/build/
+/zephyr/
+/modules/
+/bootloader/
+/tools/
+/z_vcu/
+
+/build/
+/build-*/
+/*/build/
+/*/build-*/
 
 __pycache__/
-*.py[cod]
+*.pyc
 
-.vscode/
-.idea/
 .DS_Store
 Thumbs.db
