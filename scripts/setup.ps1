@@ -318,18 +318,18 @@ try {
     # elsewhere on the machine.
     #
 
-    $SDK_CMAKE_PATH = $SDK_DIR.Replace('\', '/')
+$SDK_CMAKE_PATH = $SDK_DIR.Replace('\', '/')
 
-    $BUILD_CMAKE_ARGS = `
-        "-DZEPHYR_SDK_INSTALL_DIR=$SDK_CMAKE_PATH -DZEPHYR_TOOLCHAIN_VARIANT=zephyr"
+$BUILD_CMAKE_ARGS = "-DZEPHYR_SDK_INSTALL_DIR=$SDK_CMAKE_PATH -DZEPHYR_TOOLCHAIN_VARIANT=zephyr"
 
-    Write-Host ""
-    Write-Host "Configuring workspace SDK..."
+Write-Host ""
+Write-Host "Configuring workspace SDK..."
 
-    Run $PYTHON -m west config `
-        build.cmake-args `
-        -- `
-        $BUILD_CMAKE_ARGS
+& $PYTHON -m west config --local build.cmake-args -- "$BUILD_CMAKE_ARGS"
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to configure workspace SDK"
+}
 
 
     Write-Host "Workspace SDK: $SDK_DIR"

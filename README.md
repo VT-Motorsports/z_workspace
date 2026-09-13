@@ -47,13 +47,13 @@ At the beginning of a new PowerShell session:
 . .\scripts\activate.ps1
 ```
 
-This activates the workspace venv and configures the local Zephyr SDK.
+This activates the workspace venv
 
 Then:
 
 ```
 cd z_vcu
-west build -b vcu_stm32 .
+west build -b vcu_stm32 
 ```
 
 The virtual environment is shared by every application in this workspace.
