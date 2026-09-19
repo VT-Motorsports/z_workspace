@@ -299,8 +299,8 @@ try {
         Run $PYTHON -m west sdk install `
             --version $SDK_VERSION `
             --install-base $SDK_BASE `
-            --gnu-toolchains arm-zephyr-eabi
-    }
+            -t arm-zephyr-eabi
+            }
     else {
         Write-Host "Zephyr SDK already installed at $SDK_DIR"
     }
