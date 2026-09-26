@@ -3,9 +3,43 @@ manifest:
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
 
+    - name: vt-motorsports
+      url-base: https://github.com/VT-Motorsports
+
   projects:
     - name: zephyr
+      path: deps/zephyr
       remote: zephyrproject-rtos
       revision: v4.2.0
-      import: true
+      import:
+        name-allowlist:
+          - cmsis_6
+          - hal_stm32
 
+    - name: z_vcu
+      remote: vt-motorsports
+      revision: master
+      path: z_vcu
+
+    - name: z_tire_temp
+      remote: vt-motorsports
+      revision: master
+      path: z_tire_temp
+
+    - name: z_BMS
+      remote: vt-motorsports
+      revision: main
+      path: z_BMS
+
+    - name: z_strain_gauge
+      remote: vt-motorsports
+      revision: master
+      path: z_strain_gauge
+
+    - name: pdm
+      remote: vt-motorsports
+      revision: master
+      path: pdm
+
+  self:
+    path: .
