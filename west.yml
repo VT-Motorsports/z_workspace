@@ -41,5 +41,10 @@ manifest:
       revision: master
       path: pdm
 
+    - name: CAN-DBCs
+      remote: vt-motorsports
+      revision: main
+      path: config/dbc
+
   self:
     path: .
