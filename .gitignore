@@ -1,4 +1,5 @@
 /.venv/
+/.venv-linux/
 
 /.west/
 
@@ -12,6 +13,7 @@
 
 /build/
 /build-*/
+.cache/
 /*/build/
 /*/build-*/
 

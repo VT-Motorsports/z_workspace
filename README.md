@@ -15,7 +15,7 @@ git clone https://github.com/VT-Motorsports/z_workspace.git
 cd z_workspace
 ```
 
-### 3\. Run setup
+### 3\. Run setup on Windows
 
 Open PowerShell and run:
 
@@ -39,13 +39,28 @@ The script will:
 
 The setup script is safe to run again.
 
+### WSL2 / Linux
+
+Use Ubuntu 22.04+ on x86-64. In your Ubuntu terminal:
+
+```sh
+cd ~
+git clone https://github.com/VT-Motorsports/z_workspace.git
+cd z_workspace
+bash scripts/setup.sh
+source .venv-linux/bin/activate
+west build -b vcu_stm32 z_vcu
+```
+
+
 ## Start working
 
 At the beginning of a new PowerShell session:
 
 ```
-. .\scripts\activate.ps1
+. .\.venv\Scripts\Activate.ps1
 ```
+In a new Bash or Zsh session, use `source .venv-linux/bin/activate` instead for Linux/Ubuntu dev
 
 This activates the workspace venv
 
@@ -77,7 +92,7 @@ If the manifest changes, `west update` will fetch the repositories and revisions
 ## Building VCU
 
 ```
-. .\scripts\activate.ps1
+. .\.venv\Scripts\Activate.ps1
 cd z_vcu
 west build -b vcu_stm32 .
 ```
